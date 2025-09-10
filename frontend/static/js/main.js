@@ -1,5 +1,5 @@
 // Main Application Logic
-class PharmaQueryApp {
+class AMINAApp {
     constructor() {
         this.currentSection = 'dashboard';
         this.datasets = [];
@@ -732,26 +732,28 @@ class PharmaQueryApp {
     showHelp() {
         const helpContent = `
             <div class="help-content">
-                <h4>PharmaQuery Help</h4>
+                <h4>AMMINA Platform Help</h4>
+                <p style="color: var(--secondary-color); margin-bottom: 2rem; font-style: italic;">African Manufacturing Market Intelligence & Network Analysis</p>
                 
                 <div class="help-section">
                     <h5>Getting Started</h5>
                     <ol>
-                        <li>Upload your pharmaceutical datasets (CSV or Excel files)</li>
-                        <li>Select datasets you want to query</li>
-                        <li>Ask questions in natural language</li>
-                        <li>Review results and visualizations</li>
+                        <li>Upload your manufacturing datasets (CSV or Excel files)</li>
+                        <li>Select datasets you want to analyze</li>
+                        <li>Ask questions about African manufacturing markets</li>
+                        <li>View insights with automatic visualizations</li>
                     </ol>
                 </div>
                 
                 <div class="help-section">
                     <h5>Example Queries</h5>
                     <ul>
-                        <li>"Show me the distribution of patient ages"</li>
-                        <li>"What is the average efficacy score by treatment group?"</li>
-                        <li>"Find correlations between dose and adverse events"</li>
-                        <li>"Plot the trend of enrollment over time"</li>
-                        <li>"Which drugs have the highest success rate?"</li>
+                        <li>"Show me the distribution of manufacturers by country"</li>
+                        <li>"What are the most common product classes in Kenya?"</li>
+                        <li>"Plot organizations by therapeutic areas"</li>
+                        <li>"List all vaccine manufacturers in East Africa"</li>
+                        <li>"Compare manufacturing capacity across regions"</li>
+                        <li>"Show market intelligence for diagnostics products"</li>
                     </ul>
                 </div>
                 
@@ -761,19 +763,25 @@ class PharmaQueryApp {
                         <li>CSV files (.csv)</li>
                         <li>Excel files (.xlsx, .xls)</li>
                         <li>Maximum file size: 100MB</li>
-                        <li>Maximum rows: 1,000,000</li>
+                        <li>Multiple encodings supported</li>
                     </ul>
                 </div>
                 
                 <div class="help-section">
-                    <h5>Features</h5>
+                    <h5>Platform Features</h5>
                     <ul>
-                        <li>Natural language data querying</li>
-                        <li>Automatic data visualizations</li>
-                        <li>Dataset statistics and preview</li>
+                        <li>AI-powered market intelligence queries</li>
+                        <li>Interactive data visualizations and charts</li>
+                        <li>Manufacturing network analysis</li>
+                        <li>Dataset statistics and previews</li>
                         <li>Query history tracking</li>
-                        <li>Export results to CSV</li>
+                        <li>Multi-dataset comparative analysis</li>
                     </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h5>About</h5>
+                    <p>AMMINA is developed by <strong>Health 4 Development (H4D)</strong> to provide comprehensive market intelligence and network analysis for African manufacturing ecosystems.</p>
                 </div>
             </div>
         `;
@@ -794,8 +802,9 @@ class PharmaQueryApp {
 window.switchSection = (section) => app.switchSection(section);
 window.setExampleQuery = (query) => app.setExampleQuery(query);
 window.clearResults = () => app.clearResults();
+window.closeModal = () => app.closeModal();
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new PharmaQueryApp();
+    window.app = new AMINAApp();
 });

@@ -1,4 +1,4 @@
-// API Interface for PharmaQuery
+// API Interface for AMMINA Platform
 class API {
     static baseURL = '/api';
     

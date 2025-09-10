@@ -13,13 +13,13 @@ body {
     min-height: 100vh;
 }
 
-/* Color Palette - Pharmaceutical Theme */
+/* Color Palette - H4D AMMINA Theme */
 :root {
-    --primary-color: #2563eb;
-    --primary-hover: #1d4ed8;
-    --secondary-color: #64748b;
-    --accent-color: #059669;
-    --accent-hover: #047857;
+    --primary-color: #22c55e;
+    --primary-hover: #16a34a;
+    --secondary-color: #6b7280;
+    --accent-color: #10b981;
+    --accent-hover: #059669;
     --success-color: #10b981;
     --warning-color: #f59e0b;
     --error-color: #ef4444;
@@ -67,18 +67,29 @@ body {
 .logo {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    color: var(--primary-color);
+    gap: 1rem;
 }
 
-.logo i {
-    font-size: 1.5rem;
+.logo-image {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
 }
 
-.logo h1 {
-    font-size: 1.5rem;
+.logo-text h1 {
+    font-size: 1.75rem;
     font-weight: 700;
-    color: var(--text-primary);
+    color: var(--primary-color);
+    margin: 0;
+    line-height: 1;
+}
+
+.logo-text .company-name {
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+    font-weight: 500;
+    display: block;
+    margin-top: 0.25rem;
 }
 
 .nav-menu {

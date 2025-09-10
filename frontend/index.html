@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaQuery - Pharmaceutical Database Query Platform</title>
+    <title>AMMINA - African Manufacturing Market Intelligence & Network Analysis</title>
     <link rel="stylesheet" href="/static/css/main.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,8 +16,11 @@
         <header class="header">
             <div class="header-content">
                 <div class="logo">
-                    <i class="fas fa-flask"></i>
-                    <h1>PharmaQuery</h1>
+                    <img src="/static/images/h4d-logo.png" alt="Health 4 Development Logo" class="logo-image">
+                    <div class="logo-text">
+                        <h1>AMMINA</h1>
+                        <span class="company-name">Health 4 Development (H4D)</span>
+                    </div>
                 </div>
                 <nav class="nav-menu">
                     <button class="nav-item active" data-section="dashboard">
@@ -52,7 +55,7 @@
             <section id="dashboard-section" class="content-section active">
                 <div class="section-header">
                     <h2>Dashboard Overview</h2>
-                    <p>Welcome to PharmaQuery - your pharmaceutical data analysis platform</p>
+                    <p>African Manufacturing Market Intelligence & Network Analysis Platform</p>
                 </div>
                 
                 <div class="dashboard-grid">
@@ -132,7 +135,7 @@
             <section id="datasets-section" class="content-section">
                 <div class="section-header">
                     <h2>Dataset Management</h2>
-                    <p>Upload, organize, and manage your pharmaceutical datasets</p>
+                    <p>Upload, organize, and manage your manufacturing datasets</p>
                 </div>
 
                 <!-- Upload Area -->
@@ -180,7 +183,7 @@
             <section id="query-section" class="content-section">
                 <div class="section-header">
                     <h2>Natural Language Query</h2>
-                    <p>Ask questions about your pharmaceutical data in plain English</p>
+                    <p>Ask questions about your manufacturing data in natural language</p>
                 </div>
 
                 <div class="query-container">
@@ -199,14 +202,14 @@
                             <div class="query-examples">
                                 <p>Example queries:</p>
                                 <div class="example-tags">
-                                    <button class="example-tag" onclick="setExampleQuery('Show me the distribution of patient ages')">
-                                        Show me the distribution of patient ages
+                                    <button class="example-tag" onclick="setExampleQuery('Show me the distribution of manufacturers by country')">
+                                        Distribution of manufacturers by country
                                     </button>
-                                    <button class="example-tag" onclick="setExampleQuery('What is the average efficacy score by treatment group?')">
-                                        Average efficacy by treatment group
+                                    <button class="example-tag" onclick="setExampleQuery('What are the most common product classes?')">
+                                        Most common product classes
                                     </button>
-                                    <button class="example-tag" onclick="setExampleQuery('Find correlations between dose and adverse events')">
-                                        Correlations between dose and adverse events
+                                    <button class="example-tag" onclick="setExampleQuery('Plot organizations by therapeutic areas')">
+                                        Organizations by therapeutic areas
                                     </button>
                                 </div>
                             </div>
@@ -214,7 +217,7 @@
                             <div class="query-input-container">
                                 <textarea 
                                     id="queryInput" 
-                                    placeholder="Type your question here... e.g., 'Show me the distribution of patient ages in the clinical trial data'"
+                                    placeholder="Type your question here... e.g., 'Show me the distribution of manufacturers by country' or 'List all vaccine producers in Kenya'"
                                     rows="3"
                                 ></textarea>
                                 <button class="btn-primary query-btn" id="executeQueryBtn" onclick="executeQuery()">
