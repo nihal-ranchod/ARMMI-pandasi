@@ -1,8 +1,8 @@
-# PharmaQuery - Pharmaceutical Database Query Platform
+# AMMINA - African Manufacturing Market Intelligence & Network Analysis
 
-A comprehensive web application for querying pharmaceutical datasets using natural language. Built with pandas-ai and OpenAI GPT-4o-mini for intelligent data analysis and visualization.
+A comprehensive web application for querying manufacturing and market intelligence datasets using natural language. Built with pandas-ai and OpenAI GPT for intelligent data analysis and visualization, developed by Health 4 Development (H4D).
 
-## 🚀 Features
+## Features
 
 ### Core Functionality
 - **Natural Language Querying**: Ask questions about your data in plain English
@@ -24,7 +24,7 @@ A comprehensive web application for querying pharmaceutical datasets using natur
 - Query history tracking
 - Export results to CSV/PDF
 
-## 🏗️ Architecture
+## Architecture
 
 ### Frontend
 - **HTML/CSS/JavaScript**: Clean, modern pharmaceutical-themed UI
@@ -42,7 +42,7 @@ A comprehensive web application for querying pharmaceutical datasets using natur
 - **Environment Variables**: Secure API key management
 - **CORS Support**: Cross-origin resource sharing enabled
 
-## 📋 Requirements
+## Requirements
 
 ### System Requirements
 - Python 3.9+
@@ -58,7 +58,7 @@ A comprehensive web application for querying pharmaceutical datasets using natur
 - openai 1.3.0+
 - See `requirements.txt` for complete list
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Local Development
 
@@ -113,7 +113,7 @@ http://localhost:5000
    - Netlify will automatically deploy your site
    - Site will be available at `https://your-site-name.netlify.app`
 
-## 📖 Usage Guide
+## Usage Guide
 
 ### 1. Upload Datasets
 - Navigate to the "Datasets" section
@@ -141,7 +141,7 @@ http://localhost:5000
 - View past questions and success/failure status
 - Re-run successful queries on new datasets
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -166,19 +166,14 @@ http://localhost:5000
 - XSS protection headers
 - Content Security Policy
 
-## 🎨 Customization
-
-### Styling
-- Edit `frontend/static/css/main.css` for visual customization
-- CSS variables are used for consistent theming
-- Responsive breakpoints included
+## Customization
 
 ### API Endpoints
 - Backend API is fully documented in the code
 - RESTful design with JSON responses
 - Error handling and validation included
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -213,7 +208,7 @@ export FLASK_ENV=development
 python backend/app.py
 ```
 
-## 📊 API Documentation
+## API Documentation
 
 ### Endpoints
 
@@ -237,41 +232,6 @@ python backend/app.py
   "error": null
 }
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-### Development Guidelines
-- Follow PEP 8 for Python code
-- Use meaningful variable names
-- Add comments for complex logic
-- Test with sample pharmaceutical data
-
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🙋 Support
-
-For issues and questions:
-1. Check the troubleshooting section above
-2. Search existing GitHub issues
-3. Create a new issue with detailed information
-
-## 🔮 Future Enhancements
-
-- **Database Integration**: PostgreSQL/MySQL support
-- **Advanced Analytics**: Statistical analysis tools
-- **User Authentication**: Multi-user support
-- **Data Validation**: Advanced pharmaceutical data checks
-- **API Rate Limiting**: Enhanced security measures
-- **Caching**: Improved performance for large datasets
-
----
-
-Built with ❤️ for the pharmaceutical research community
