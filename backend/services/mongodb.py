@@ -22,7 +22,9 @@ class MongoDB:
     
     def connect(self):
         try:
-            mongodb_uri = os.getenv('MONGODB_URI', 'mongodb+srv://nihalranchod_db_user:U1UmClr8Allz308p@ammina.wwxrxig.mongodb.net/?retryWrites=true&w=majority&appName=AMMINA')
+            mongodb_uri = os.getenv('MONGODB_URI')
+            if not mongodb_uri:
+                raise ValueError("MONGODB_URI environment variable is required")
             
             self._client = MongoClient(
                 mongodb_uri,
