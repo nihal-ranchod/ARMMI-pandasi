@@ -1,237 +1,217 @@
 # AMMINA - African Manufacturing Market Intelligence & Network Analysis
 
-A comprehensive web application for querying manufacturing and market intelligence datasets using natural language. Built with pandas-ai and OpenAI GPT for intelligent data analysis and visualization, developed by Health 4 Development (H4D).
+A modern web application for analyzing pharmaceutical manufacturing and market intelligence datasets using natural language queries. Built with Flask, MongoDB, and OpenAI GPT-4o-mini, developed by Health 4 Development (H4D).
 
 ## Features
 
-### Core Functionality
-- **Natural Language Querying**: Ask questions about your data in plain English
-- **Multi-dataset Support**: Upload and query multiple CSV/Excel files simultaneously
-- **RAG Responses**: Get accurate, context-aware responses based on your data
-- **Data Visualizations**: Automatic chart generation with Plotly
+### User Authentication
+- Secure user registration and login system
+- MongoDB-based user management
+- Session-based authentication
+- Individual user data isolation
 
-### Dataset Management
+### Natural Language Data Analysis
+- Ask questions about your data in plain English using **PandasAI** + **GPT-4o-mini**
+- Multi-dataset support: Upload and query multiple CSV/Excel files
+- Intelligent data processing and visualization generation
+- Automatic fallback to direct OpenAI processing when needed
+
+### Data Management
+- **Per-user data storage** in MongoDB (no local file storage)
 - Drag-and-drop file upload interface
-- Dataset preview and statistics
-- File validation and security checks
-- Rename and delete datasets
-- Support for CSV, XLSX, and XLS formats
+- Dataset preview, statistics, and management
+- Support for CSV, XLSX, and XLS formats with multiple encodings
+- Dataset renaming and deletion capabilities
 
-### User Interface
-- Professional pharmaceutical industry design
-- Responsive layout for desktop and tablet
+### Modern User Interface
+- **Professional three-section login design** with H4D branding
+- Responsive layout optimized for desktop and tablet
 - Real-time query execution with progress indicators
-- Query history tracking
-- Export results to CSV/PDF
+- Comprehensive query history tracking per user
+- Interactive data visualizations with Plotly
 
 ## Architecture
 
 ### Frontend
-- **HTML/CSS/JavaScript**: Clean, modern pharmaceutical-themed UI
+- **HTML/CSS/JavaScript**: Modern pharmaceutical-themed UI with H4D colors
 - **Plotly.js**: Interactive data visualizations
-- **Responsive Design**: Works on desktop and tablet devices
+- **Responsive Design**: Three-section login, dashboard, and analysis views
 
 ### Backend
-- **Flask**: Python web framework for API endpoints
-- **pandas-ai**: Natural language data querying
-- **OpenAI GPT**: Large language model integration
-- **Plotly**: Server-side visualization generation
-
-### Deployment
-- **Netlify**: Static frontend hosting with serverless functions
-- **Environment Variables**: Secure API key management
-- **CORS Support**: Cross-origin resource sharing enabled
-
-## Requirements
-
-### System Requirements
-- Python 3.9+
-- Node.js (for local development)
-- OpenAI API key
-
-### Python Dependencies
-- Flask 2.3.3+
-- pandasai 2.3.2
-- pandas 1.5.3 (exact version required)
-- numpy 1.23.5 (exact version required)  
-- plotly 5.17.0+
-- openai 1.3.0+
-- See `requirements.txt` for complete list
+- **Flask**: Python web framework with RESTful API design
+- **MongoDB**: User authentication and data storage
+- **PandasAI**: Natural language data querying with GPT-4o-mini
+- **OpenAI GPT-4o-mini**: Fallback for intelligent data analysis
+- **Flask-Session**: Secure session management
 
 ## Quick Start
 
-### Local Development
+### Prerequisites
+- Python 3.9+
+- MongoDB (local installation or MongoDB Atlas)
+- OpenAI API key
 
-1. **Clone the repository**
+### 1. Clone and Setup
 ```bash
 git clone <repository-url>
 cd ARMMI-pandasi
-```
 
-2. **Set up Python environment**
-```bash
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\\Scripts\\activate
+
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-3. **Configure environment variables**
+### 2. Environment Configuration
+Create a `.env` file in the backend directory:
 ```bash
-cp .env.example .env
-# Edit .env and add your OpenAI API key
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+
+# MongoDB Configuration
+MONGODB_URI=mongodb://localhost:27017/ammina  # Or your MongoDB Atlas URI
+
+# Flask Configuration
+SECRET_KEY=your-secret-key-for-sessions-change-in-production
+FLASK_ENV=development  # Set to 'production' for production
 ```
 
-4. **Run the development server**
+### 3. Run the Application
 ```bash
 cd backend
 python app.py
 ```
 
-5. **Open your browser**
-```
-http://localhost:5000
-```
+The application will be available at `http://localhost:5000`
 
-### Netlify Deployment
+## 📋 Environment Variables
 
-1. **Connect to Netlify**
-   - Fork this repository
-   - Connect your GitHub repo to Netlify
-   - Select the main branch
-
-2. **Configure Build Settings**
-   - Build command: `echo "Static site"`
-   - Publish directory: `frontend`
-   - Functions directory: `netlify/functions`
-
-3. **Set Environment Variables**
-   ```
-   OPENAI_API_KEY=your_openai_api_key_here
-   ```
-
-4. **Deploy**
-   - Netlify will automatically deploy your site
-   - Site will be available at `https://your-site-name.netlify.app`
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `OPENAI_API_KEY` | OpenAI API key for GPT-4o-mini | Yes | - |
+| `MONGODB_URI` | MongoDB connection URI | Yes | `mongodb://localhost:27017/ammina` |
+| `SECRET_KEY` | Flask secret key for sessions | Yes | Generated UUID |
+| `FLASK_ENV` | Flask environment | No | `development` |
 
 ## Usage Guide
 
-### 1. Upload Datasets
+### 1. **Registration & Login**
+- Visit the application and create an account
+- Login with your credentials
+- Each user has isolated data storage
+
+### 2. **Upload Datasets**
 - Navigate to the "Datasets" section
-- Drag and drop CSV or Excel files
-- Files are validated for format and size
-- View dataset previews and statistics
+- Drag and drop CSV or Excel files (up to 100MB)
+- Files are processed and stored in your personal MongoDB space
+- View dataset previews, statistics, and manage your data
 
-### 2. Query Your Data
+### 3. **Natural Language Queries**
 - Go to the "Query" section
-- Select one or more datasets
-- Type your question in natural language
-- Examples:
-  - "Show me the distribution of patient ages"
-  - "What is the average efficacy score by treatment group?"
-  - "Find correlations between dose and adverse events"
+- Select one or more of your datasets
+- Ask questions in plain English:
+  - *"Show me the distribution of manufacturers by country"*
+  - *"List all organizations located in Kenya"* 
+  - *"Plot product classes by therapeutic area"*
+  - *"What are the most common product categories?"*
 
-### 3. View Results
-- Results include text responses and visualizations
-- Data tables show relevant subsets of your data
-- Charts are automatically generated for visual data
-- Export results to CSV format
+### 4. **View Results & History**
+- Results include intelligent text responses and auto-generated visualizations
+- All queries are saved in your personal history
+- Export functionality (in development)
 
-### 4. Track History
-- All queries are saved in the "History" section
-- View past questions and success/failure status
-- Re-run successful queries on new datasets
+## Security & Data Management
 
-## Configuration
+- **User Isolation**: Each user's data is completely separate
+- **No Local Storage**: All data stored securely in MongoDB
+- **Session Management**: Secure Flask sessions with user authentication
+- **File Validation**: Comprehensive upload validation and sanitization
+- **Encoding Support**: UTF-8, Latin-1, ISO-8859-1, CP1252, UTF-16
 
-### Environment Variables
+## API Documentation
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `OPENAI_API_KEY` | OpenAI API key for GPT models | Yes |
-| `FLASK_ENV` | Flask environment (development/production) | No |
-| `MAX_CONTENT_LENGTH` | Maximum file upload size in bytes | No |
+### Authentication Endpoints
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login  
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/me` - Get current user info
 
-### File Limits
+### Data Management Endpoints
+- `GET /api/datasets` - List user's datasets
+- `POST /api/upload` - Upload new dataset
+- `GET /api/datasets/{id}/preview` - Dataset preview
+- `GET /api/datasets/{id}/stats` - Dataset statistics
+- `PUT /api/datasets/{id}/rename` - Rename dataset
+- `DELETE /api/datasets/{id}` - Delete dataset
 
-- **Maximum file size**: 100MB
-- **Maximum rows**: 1,000,000
-- **Maximum columns**: 1,000
-- **Supported formats**: CSV, XLSX, XLS
-
-### Security Features
-
-- File type validation
-- Content validation
-- CORS protection
-- XSS protection headers
-- Content Security Policy
-
-## Customization
-
-### API Endpoints
-- Backend API is fully documented in the code
-- RESTful design with JSON responses
-- Error handling and validation included
+### Query Endpoints
+- `POST /api/query` - Execute natural language query
+- `GET /api/query-history` - Get user's query history
+- `GET /api/export/{id}` - Export query results
 
 ## Troubleshooting
 
 ### Common Issues
 
-**Installation Issues**
-- If you get "pandas-ai not found", use `pip install pandasai` (note: no hyphen)
-- For dependency conflicts, try: `pip install --upgrade --force-reinstall pandasai`
-- Ensure Python 3.9+ is being used
+**MongoDB Connection Issues**
+- Ensure MongoDB is running locally or MongoDB Atlas is accessible
+- Check `MONGODB_URI` environment variable
+- Verify network connectivity for Atlas connections
 
-**Upload Fails**
-- Check file size (max 100MB)
-- Verify file format (CSV, XLSX, XLS only)
-- Ensure proper column headers
-- For encoding errors: The system supports UTF-8, Latin-1, ISO-8859-1, CP1252, and UTF-16 encodings
-- If upload still fails, try opening your CSV in Excel and saving as "CSV UTF-8" format
+**Authentication Problems** 
+- Clear browser cookies/session data
+- Check `SECRET_KEY` is set in environment
+- Restart the Flask application
 
-**Query Errors**
-- Verify OpenAI API key is set correctly
-- Check dataset selection
-- Ensure query is specific and clear
-- If pandasai fails, the system will fallback to direct OpenAI processing
+**Query Execution Errors**
+- Verify `OPENAI_API_KEY` is valid and has credits
+- Check dataset selection in the query interface
+- Review query history for error details
 
-**Deployment Issues**
-- Verify environment variables in Netlify
-- Check build logs for Python dependency issues
-- Ensure functions directory is correct
-- Make sure `pandasai` (not `pandas-ai`) is in requirements.txt
+**File Upload Issues**
+- Maximum file size: 100MB
+- Supported formats: CSV, XLSX, XLS
+- Try different encodings if CSV upload fails
 
 ### Debug Mode
 ```bash
 export FLASK_DEBUG=True
 export FLASK_ENV=development
-python backend/app.py
+cd backend
+python app.py
 ```
 
-## API Documentation
+## Development
 
-### Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/datasets` | List all datasets |
-| POST | `/api/upload` | Upload new dataset |
-| GET | `/api/datasets/{id}/preview` | Preview dataset |
-| GET | `/api/datasets/{id}/stats` | Dataset statistics |
-| PUT | `/api/datasets/{id}/rename` | Rename dataset |
-| DELETE | `/api/datasets/{id}` | Delete dataset |
-| POST | `/api/query` | Execute query |
-| GET | `/api/query-history` | Get query history |
-| GET | `/api/export/{id}` | Export results |
-
-### Response Format
-```json
-{
-  "success": true,
-  "data": {},
-  "error": null
-}
+### Project Structure
 ```
+AMMINA/
+├── backend/
+│   ├── app.py              # Flask application entry point
+│   ├── auth/               # Authentication system
+│   ├── services/           # Business logic services
+│   └── utils/              # Utility functions
+├── frontend/               # Static web files
+│   ├── index.html          # Main application
+│   ├── login.html          # Login/registration page
+│   └── static/             # CSS, JS, assets
+├── docs/                   # Documentation
+├── requirements.txt        # Python dependencies
+└── README.md              # This file
+```
+
+### Key Technologies
+- **Flask 2.3+**: Web framework
+- **PyMongo**: MongoDB integration
+- **PandasAI**: Natural language data queries
+- **OpenAI Python SDK**: GPT integration  
+- **Pandas**: Data processing
+- **Plotly**: Data visualization
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+---

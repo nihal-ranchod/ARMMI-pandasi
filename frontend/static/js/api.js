@@ -6,6 +6,7 @@ class API {
         const url = `${this.baseURL}${endpoint}`;
         
         const defaultOptions = {
+            credentials: 'include', // Include cookies for session management
             headers: {
                 'Content-Type': 'application/json',
             },
@@ -25,7 +26,15 @@ class API {
             const response = await fetch(url, config);
             const data = await response.json();
             
+            // Handle authentication errors
             if (!response.ok) {
+                if (response.status === 401 && data.auth_error) {
+                    // Authentication required - redirect to login
+                    if (window.authManager) {
+                        window.authManager.showAuthModal();
+                    }
+                    throw new Error('Authentication required');
+                }
                 throw new Error(data.error || `HTTP error! status: ${response.status}`);
             }
             
@@ -74,13 +83,44 @@ class API {
         });
     }
     
-    // Query Execution
-    static async executeQuery(query, datasets) {
+    // Admin Shared Dataset Management
+    static async getSharedDatasets() {
+        return this.request('/shared-datasets');
+    }
+
+    static async getAdminSharedDatasets() {
+        return this.request('/admin/shared-datasets');
+    }
+    
+    static async uploadSharedDataset(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        return this.request('/admin/shared-datasets/upload', {
+            method: 'POST',
+            body: formData,
+        });
+    }
+    
+    static async renameSharedDataset(datasetId, newName) {
+        return this.request(`/admin/shared-datasets/${datasetId}/rename`, {
+            method: 'PUT',
+            body: JSON.stringify({ name: newName }),
+        });
+    }
+    
+    static async deleteSharedDataset(datasetId) {
+        return this.request(`/admin/shared-datasets/${datasetId}`, {
+            method: 'DELETE',
+        });
+    }
+
+    // Query Execution (Updated for new architecture)
+    static async executeQuery(query) {
         return this.request('/query', {
             method: 'POST',
             body: JSON.stringify({
                 query: query,
-                datasets: datasets,
             }),
         });
     }
@@ -90,14 +130,33 @@ class API {
         return this.request('/query-history');
     }
     
+    static async clearQueryHistory() {
+        return this.request('/query-history', {
+            method: 'DELETE',
+        });
+    }
+    
+    static async getQueryResult(queryId) {
+        return this.request(`/query-result/${queryId}`);
+    }
+    
     // Export
     static async exportResults(resultId, format = 'csv') {
         const url = `${this.baseURL}/export/${resultId}?format=${format}`;
         
         try {
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                credentials: 'include' // Include session cookies
+            });
             
             if (!response.ok) {
+                if (response.status === 401) {
+                    // Authentication required
+                    if (window.authManager) {
+                        window.authManager.showAuthModal();
+                    }
+                    throw new Error('Authentication required');
+                }
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Export failed');
             }

@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AMMINA - African Manufacturing Market Intelligence & Network Analysis</title>
-    <link rel="stylesheet" href="/static/css/main.css">
+    <link rel="stylesheet" href="/static/css/main.css?v=1.8">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-container">
+    <div class="app-container" id="appContainer">
         <!-- Header -->
         <header class="header">
             <div class="header-content">
@@ -41,6 +41,40 @@
                     </button>
                 </nav>
                 <div class="header-actions">
+                    <div class="user-info" id="userInfo" style="display: flex;">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="user-details">
+                            <span class="user-name" id="userName">User Name</span>
+                        </div>
+                        <div class="user-menu">
+                            <button class="user-dropdown-btn" id="userDropdownBtn">
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <div class="user-dropdown" id="userDropdown" style="display: none;">
+                                <div class="dropdown-header">
+                                    <div class="user-avatar-circle" id="dropdownAvatar">
+                                        <span class="user-initials" id="dropdownInitials">UN</span>
+                                    </div>
+                                    <div class="user-info-text">
+                                        <span class="user-role-badge" id="dropdownRole">User</span>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <div class="dropdown-menu">
+                                    <button class="dropdown-menu-item" id="userSettingsBtn">
+                                        <i class="fas fa-cog"></i>
+                                        <span>User Settings</span>
+                                    </button>
+                                    <button class="dropdown-menu-item logout-btn" id="logoutBtn">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Logout</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <button class="btn-secondary" id="helpBtn">
                         <i class="fas fa-question-circle"></i>
                         Help
@@ -134,17 +168,21 @@
             <!-- Datasets Section -->
             <section id="datasets-section" class="content-section">
                 <div class="section-header">
-                    <h2>Dataset Management</h2>
-                    <p>Upload, organize, and manage your manufacturing datasets</p>
+                    <h2 id="datasetsTitle">Available Datasets</h2>
+                    <p id="datasetsDescription">View shared datasets available for querying</p>
                 </div>
 
-                <!-- Upload Area -->
-                <div class="upload-section">
+                <!-- Admin Upload Area (Hidden for regular users) -->
+                <div class="upload-section" id="adminUploadSection" style="display: none;">
+                    <div class="admin-badge">
+                        <i class="fas fa-shield-alt"></i>
+                        Admin Functions
+                    </div>
                     <div class="upload-area" id="uploadArea">
                         <div class="upload-content">
                             <i class="fas fa-cloud-upload-alt"></i>
-                            <h3>Upload Dataset</h3>
-                            <p>Drag and drop your CSV or Excel files here, or click to browse</p>
+                            <h3>Upload Shared Dataset</h3>
+                            <p>Upload datasets that will be available to all users for querying</p>
                             <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" multiple style="display: none;">
                             <button class="btn-primary" onclick="document.getElementById('fileInput').click()">
                                 Choose Files
@@ -162,7 +200,7 @@
                 <!-- Datasets List -->
                 <div class="datasets-container">
                     <div class="datasets-header">
-                        <h3>Your Datasets</h3>
+                        <h3 id="datasetsListTitle">Shared Datasets</h3>
                         <div class="dataset-controls">
                             <button class="btn-secondary" id="refreshDatasets">
                                 <i class="fas fa-sync-alt"></i>
@@ -188,11 +226,13 @@
 
                 <div class="query-container">
                     <div class="query-setup">
-                        <div class="dataset-selection">
-                            <h3>Select Datasets</h3>
-                            <div class="dataset-checkboxes" id="queryDatasetsList">
-                                <div class="empty-state">
-                                    <p>No datasets available. <a href="#" onclick="switchSection('datasets')">Upload datasets first</a></p>
+                        <!-- Available Datasets Info (Read-only for regular users) -->
+                        <div class="dataset-info" id="availableDatasets">
+                            <h3>Available Datasets</h3>
+                            <div class="dataset-summary" id="datasetSummary">
+                                <div class="loading-state">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <p>Loading available datasets...</p>
                                 </div>
                             </div>
                         </div>
@@ -232,10 +272,6 @@
                         <div class="results-header">
                             <h3>Query Results</h3>
                             <div class="results-actions">
-                                <button class="btn-secondary" id="exportResults">
-                                    <i class="fas fa-download"></i>
-                                    Export
-                                </button>
                                 <button class="btn-secondary" onclick="clearResults()">
                                     <i class="fas fa-times"></i>
                                     Clear
@@ -297,8 +333,8 @@
 
     <!-- Scripts -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script src="/static/js/main.js"></script>
-    <script src="/static/js/api.js"></script>
-    <script src="/static/js/ui.js"></script>
+    <script src="/static/js/main.js?v=1.9"></script>
+    <script src="/static/js/api.js?v=1.6"></script>
+    <script src="/static/js/ui.js?v=1.6"></script>
 </body>
 </html>

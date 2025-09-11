@@ -5,14 +5,19 @@ class AMINAApp {
         this.datasets = [];
         this.queryHistory = [];
         this.currentQuery = null;
+        this.outsideClickListenerAdded = false;
         
         this.init();
     }
     
     init() {
         this.setupEventListeners();
+        // Show user info section immediately (will be populated when data loads)
+        const userInfo = document.getElementById('userInfo');
+        if (userInfo) userInfo.style.display = 'flex';
+        
+        // User is already authenticated since they reached this page
         this.loadInitialData();
-        this.switchSection('dashboard');
     }
     
     setupEventListeners() {
@@ -49,11 +54,15 @@ class AMINAApp {
         
         // Refresh buttons
         document.getElementById('refreshDatasets')?.addEventListener('click', () => {
-            this.loadDatasets();
+            this.loadSharedDatasets();
         });
         
         document.getElementById('refreshHistory')?.addEventListener('click', () => {
             this.loadQueryHistory();
+        });
+        
+        document.getElementById('clearHistory')?.addEventListener('click', () => {
+            this.clearQueryHistory();
         });
         
         // Query execution
@@ -72,18 +81,32 @@ class AMINAApp {
         document.getElementById('helpBtn')?.addEventListener('click', () => {
             this.showHelp();
         });
+        
+        // User dropdown functionality
+        this.setupUserDropdown();
     }
     
     async loadInitialData() {
         try {
+            // Load user info first to determine user role
+            await this.loadUserInfo();
+            
+            // Then load data based on user role
             await Promise.all([
-                this.loadDatasets(),
+                this.loadSharedDatasets(),
                 this.loadQueryHistory()
             ]);
             this.updateDashboard();
         } catch (error) {
             console.error('Error loading initial data:', error);
-            UI.showToast('Error loading data', 'error');
+            
+            // Handle authentication errors
+            if (error.message && error.message.includes('Authentication required')) {
+                // Redirect to login page
+                window.location.href = '/login';
+            } else {
+                UI.showToast('Error loading data', 'error');
+            }
         }
     }
     
@@ -104,34 +127,17 @@ class AMINAApp {
         
         // Load section-specific data
         if (sectionName === 'datasets') {
-            this.loadDatasets();
+            this.loadSharedDatasets();
         } else if (sectionName === 'query') {
             this.updateQueryDatasetsList();
         } else if (sectionName === 'history') {
             this.loadQueryHistory();
         } else if (sectionName === 'dashboard') {
-            this.updateDashboard();
+            this.loadDashboardData();
         }
     }
     
-    async loadDatasets() {
-        try {
-            UI.showLoading('datasetsList');
-            const response = await API.getDatasets();
-            
-            if (response.success) {
-                this.datasets = response.datasets;
-                this.renderDatasetsList();
-                this.updateQueryDatasetsList();
-            } else {
-                throw new Error(response.error);
-            }
-        } catch (error) {
-            console.error('Error loading datasets:', error);
-            UI.showError('datasetsList', 'Failed to load datasets');
-            UI.showToast('Failed to load datasets', 'error');
-        }
-    }
+    // Legacy loadDatasets method removed - replaced with loadSharedDatasets
     
     renderDatasetsList() {
         const container = document.getElementById('datasetsList');
@@ -164,10 +170,10 @@ class AMINAApp {
                     <button class="action-icon" onclick="app.showDatasetStats('${dataset.id}')" title="Statistics">
                         <i class="fas fa-chart-bar"></i>
                     </button>
-                    <button class="action-icon" onclick="app.renameDataset('${dataset.id}')" title="Rename">
+                    <button class="action-icon" onclick="app.renameSharedDataset('${dataset.id}')" title="Rename">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="action-icon danger" onclick="app.deleteDataset('${dataset.id}')" title="Delete">
+                    <button class="action-icon danger" onclick="app.deleteSharedDataset('${dataset.id}')" title="Delete">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -176,40 +182,48 @@ class AMINAApp {
     }
     
     updateQueryDatasetsList() {
-        const container = document.getElementById('queryDatasetsList');
+        const container = document.getElementById('datasetSummary');
         
         if (this.datasets.length === 0) {
+            const emptyMessage = this.currentUser?.is_admin ? 
+                'No datasets available. Upload datasets in the Datasets section.' :
+                'No shared datasets available. Contact an administrator to upload datasets.';
+            
             container.innerHTML = `
                 <div class="empty-state">
-                    <p>No datasets available. <a href="#" onclick="app.switchSection('datasets')">Upload datasets first</a></p>
+                    <i class="fas fa-database"></i>
+                    <p>${emptyMessage}</p>
                 </div>
             `;
             return;
         }
         
-        container.innerHTML = this.datasets.map(dataset => `
-            <div class="dataset-checkbox" onclick="app.toggleDatasetSelection('${dataset.id}')">
-                <input type="checkbox" id="dataset-${dataset.id}" value="${dataset.id}">
-                <label for="dataset-${dataset.id}">
-                    <strong>${dataset.name}</strong>
-                    <small>(${dataset.rows.toLocaleString()} rows, ${dataset.columns} columns)</small>
-                </label>
+        container.innerHTML = `
+            <div class="shared-datasets-info">
+                <p class="info-text">
+                    <i class="fas fa-info-circle"></i>
+                    Your query will automatically search across all ${this.datasets.length} available shared dataset${this.datasets.length > 1 ? 's' : ''}:
+                </p>
             </div>
-        `).join('');
+            ${this.datasets.map(dataset => `
+                <div class="dataset-info-item">
+                    <div class="dataset-icon">
+                        <i class="fas fa-table"></i>
+                    </div>
+                    <div class="dataset-details">
+                        <strong>${dataset.name}</strong>
+                        <small>${dataset.rows.toLocaleString()} rows • ${dataset.columns} columns</small>
+                    </div>
+                    <div class="dataset-status">
+                        <i class="fas fa-check-circle text-success"></i>
+                    </div>
+                </div>
+            `).join('')}
+        `;
     }
     
-    toggleDatasetSelection(datasetId) {
-        const checkbox = document.getElementById(`dataset-${datasetId}`);
-        const container = checkbox.closest('.dataset-checkbox');
-        
-        checkbox.checked = !checkbox.checked;
-        container.classList.toggle('selected', checkbox.checked);
-    }
-    
-    getSelectedDatasets() {
-        return Array.from(document.querySelectorAll('#queryDatasetsList input[type="checkbox"]:checked'))
-            .map(cb => cb.value);
-    }
+    // Dataset selection methods no longer needed in shared architecture
+    // All available shared datasets are automatically included in queries
     
     async handleFileSelect(event) {
         const files = event.dataTransfer ? event.dataTransfer.files : event.target.files;
@@ -240,7 +254,10 @@ class AMINAApp {
                 }
             }, 200);
             
-            const response = await API.uploadDataset(file);
+            // Use admin upload endpoint for admin users
+            const response = this.currentUser?.is_admin ? 
+                await API.uploadSharedDataset(file) : 
+                await API.uploadDataset(file);
             
             clearInterval(progressInterval);
             progressFill.style.width = '100%';
@@ -250,7 +267,7 @@ class AMINAApp {
                 UI.showToast(`Successfully uploaded ${file.name}`, 'success');
                 
                 // Refresh datasets
-                await this.loadDatasets();
+                await this.loadSharedDatasets();
                 
                 setTimeout(() => {
                     progressContainer.style.display = 'none';
@@ -411,11 +428,11 @@ class AMINAApp {
         
         if (newName && newName !== dataset.name) {
             try {
-                const response = await API.renameDataset(datasetId, newName);
+                const response = await API.renameSharedDataset(datasetId, newName);
                 
                 if (response.success) {
                     UI.showToast('Dataset renamed successfully', 'success');
-                    await this.loadDatasets();
+                    await this.loadSharedDatasets();
                 } else {
                     throw new Error(response.error);
                 }
@@ -426,37 +443,17 @@ class AMINAApp {
         }
     }
     
-    async deleteDataset(datasetId) {
-        const dataset = this.datasets.find(d => d.id === datasetId);
-        
-        if (confirm(`Are you sure you want to delete "${dataset.name}"? This action cannot be undone.`)) {
-            try {
-                const response = await API.deleteDataset(datasetId);
-                
-                if (response.success) {
-                    UI.showToast('Dataset deleted successfully', 'success');
-                    await this.loadDatasets();
-                } else {
-                    throw new Error(response.error);
-                }
-            } catch (error) {
-                console.error('Delete error:', error);
-                UI.showToast('Failed to delete dataset', 'error');
-            }
-        }
-    }
     
     async executeQuery() {
         const queryText = document.getElementById('queryInput').value.trim();
-        const selectedDatasets = this.getSelectedDatasets();
         
         if (!queryText) {
             UI.showToast('Please enter a query', 'warning');
             return;
         }
         
-        if (selectedDatasets.length === 0) {
-            UI.showToast('Please select at least one dataset', 'warning');
+        if (this.datasets.length === 0) {
+            UI.showToast('No datasets available for querying', 'warning');
             return;
         }
         
@@ -468,7 +465,7 @@ class AMINAApp {
             executeBtn.disabled = true;
             executeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Executing...';
             
-            const response = await API.executeQuery(queryText, selectedDatasets);
+            const response = await API.executeQuery(queryText);
             
             if (response.success) {
                 this.currentQuery = response.result;
@@ -514,20 +511,20 @@ class AMINAApp {
             `;
         }
         
-        // Show ONLY visualizations/charts if generated
-        const vizIds = []; // Store IDs to use consistently
+        // Show visualizations/charts if generated
         if (result.visualizations && result.visualizations.length > 0) {
             console.log('Adding visualizations:', result.visualizations.length); // Debug log
             result.visualizations.forEach((viz, index) => {
-                const vizId = `viz-${Date.now()}-${index}`;
-                vizIds.push(vizId); // Store the ID
                 html += `
                     <div class="result-item">
                         <h4><i class="fas fa-chart-bar"></i> ${viz.title}</h4>
-                        <div class="visualization" id="${vizId}">
-                            <div class="viz-loading">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                <span>Rendering chart...</span>
+                        <div class="visualization">
+                            <img src="${viz.url}" alt="${viz.title}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" 
+                                 onload="console.log('Chart loaded successfully')" 
+                                 onerror="console.error('Failed to load chart:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';">
+                            <div style="display: none; text-align: center; color: #666; padding: 20px;">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <p>Failed to load chart</p>
                             </div>
                         </div>
                     </div>
@@ -535,15 +532,52 @@ class AMINAApp {
             });
         }
         
-        content.innerHTML = html;
-        
-        // Render visualizations after DOM update using stored IDs
-        if (result.visualizations && result.visualizations.length > 0) {
-            result.visualizations.forEach((viz, index) => {
-                console.log('Rendering viz:', viz); // Debug log
-                this.renderVisualization(viz, vizIds[index]); // Use stored ID
+        // Show data tables if present
+        if (result.data_tables && result.data_tables.length > 0) {
+            console.log('Adding data tables:', result.data_tables.length); // Debug log
+            result.data_tables.forEach((table, index) => {
+                html += `
+                    <div class="result-item">
+                        <h4><i class="fas fa-table"></i> ${table.title}</h4>
+                        <div class="data-table-container">
+                            ${this.renderDataTable(table)}
+                        </div>
+                    </div>
+                `;
             });
         }
+        
+        content.innerHTML = html;
+    }
+    
+    renderDataTable(table) {
+        if (!table.data || !table.columns || table.data.length === 0) {
+            return '<p class="no-data">No data to display</p>';
+        }
+        
+        let html = '<div class="table-wrapper"><table class="data-table">';
+        
+        // Table header
+        html += '<thead><tr>';
+        table.columns.forEach(col => {
+            html += `<th>${col}</th>`;
+        });
+        html += '</tr></thead>';
+        
+        // Table body
+        html += '<tbody>';
+        table.data.forEach(row => {
+            html += '<tr>';
+            table.columns.forEach(col => {
+                const value = row[col];
+                const displayValue = value === null || value === undefined ? '' : value;
+                html += `<td>${displayValue}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody></table></div>';
+        
+        return html;
     }
     
     formatResponseText(text) {
@@ -643,6 +677,8 @@ class AMINAApp {
             if (response.success) {
                 this.queryHistory = response.history;
                 this.renderQueryHistory();
+                // Update dashboard when query history changes
+                this.updateDashboard();
             } else {
                 throw new Error(response.error);
             }
@@ -666,22 +702,81 @@ class AMINAApp {
         }
         
         container.innerHTML = this.queryHistory.map(item => `
-            <div class="history-item">
+            <div class="history-item ${item.success ? 'clickable' : ''}" ${item.success ? `onclick="app.showQueryResult('${item.id}')"` : ''}>
                 <div class="history-info">
                     <h4>${item.query}</h4>
                     <div class="history-meta">
                         ${new Date(item.timestamp).toLocaleString()} • 
                         Datasets: ${item.datasets.join(', ')}
+                        ${item.success ? ' • Click to view results' : ''}
                     </div>
                 </div>
                 <div class="history-status">
                     <span class="${item.success ? 'status-success' : 'status-error'}">
                         <i class="fas fa-${item.success ? 'check-circle' : 'exclamation-circle'}"></i>
-                        ${item.success ? 'Success' : 'Failed'}
+                        ${item.success ? 'Success' : item.error ? item.error : 'Failed'}
                     </span>
                 </div>
             </div>
         `).join('');
+    }
+    
+    async clearQueryHistory() {
+        if (!confirm('Are you sure you want to clear all query history? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await API.clearQueryHistory();
+            
+            if (response.success) {
+                UI.showToast('Query history cleared successfully', 'success');
+                await this.loadQueryHistory();
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            console.error('Clear history error:', error);
+            UI.showToast('Failed to clear query history', 'error');
+        }
+    }
+    
+    async showQueryResult(queryId) {
+        try {
+            // Find the query in history
+            const query = this.queryHistory.find(q => q.id === queryId);
+            if (!query) {
+                UI.showToast('Query not found', 'error');
+                return;
+            }
+            
+            // Fetch the full query result with charts
+            const response = await API.getQueryResult(queryId);
+            
+            if (response.success && response.result) {
+                // Switch to query section to show results
+                this.switchSection('query');
+                
+                // Display the stored result
+                this.currentQuery = response.result;
+                this.renderQueryResults(response.result);
+                
+                // Show the results container
+                const resultsContainer = document.getElementById('queryResults');
+                resultsContainer.style.display = 'block';
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+                
+                UI.showToast('Showing results from history', 'success');
+            } else {
+                // Fallback for older queries without full results
+                UI.showToast('Query result viewing is not available for this query. Original query: "' + query.query + '"', 'info');
+            }
+        } catch (error) {
+            console.error('Error loading query result:', error);
+            UI.showToast('Failed to load query result', 'error');
+        }
     }
     
     updateDashboard() {
@@ -729,6 +824,227 @@ class AMINAApp {
         document.getElementById('modalOverlay').classList.remove('active');
     }
     
+    setupUserDropdown() {
+        // Remove existing event listeners to prevent duplicates
+        const dropdownBtn = document.getElementById('userDropdownBtn');
+        if (dropdownBtn) {
+            // Clone node to remove existing listeners
+            const newBtn = dropdownBtn.cloneNode(true);
+            dropdownBtn.parentNode.replaceChild(newBtn, dropdownBtn);
+            
+            newBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleUserDropdown();
+            });
+        }
+
+        // Set up user settings button
+        const userSettingsBtn = document.getElementById('userSettingsBtn');
+        if (userSettingsBtn) {
+            userSettingsBtn.addEventListener('click', () => {
+                this.closeUserDropdown();
+                this.showUserSettings();
+            });
+        }
+
+        // Set up logout button
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                this.closeUserDropdown();
+                this.handleLogout();
+            });
+        }
+
+        // Set up click outside to close
+        if (!this.outsideClickListenerAdded) {
+            document.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('userDropdown');
+                const userMenu = document.querySelector('.user-menu');
+                
+                if (dropdown && !userMenu?.contains(e.target)) {
+                    this.closeUserDropdown();
+                }
+            });
+            this.outsideClickListenerAdded = true;
+        }
+    }
+    
+    toggleUserDropdown() {
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) {
+            const isVisible = dropdown.style.display === 'block';
+            dropdown.style.display = isVisible ? 'none' : 'block';
+            
+            // Fix positioning issues when showing
+            if (dropdown.style.display === 'block') {
+                const userMenu = dropdown.closest('.user-menu');
+                const userMenuRect = userMenu?.getBoundingClientRect();
+                
+                // Use fixed positioning relative to the button
+                if (userMenuRect) {
+                    dropdown.style.position = 'fixed';
+                    dropdown.style.top = `${userMenuRect.bottom + 8}px`;
+                    dropdown.style.right = `${window.innerWidth - userMenuRect.right}px`;
+                    dropdown.style.left = 'auto';
+                    dropdown.style.zIndex = '1100';
+                }
+            }
+        }
+    }
+    
+    closeUserDropdown() {
+        const dropdown = document.getElementById('userDropdown');
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+    }
+    
+    async showUserSettings() {
+        try {
+            // Fetch current user data from API
+            const response = await fetch('/api/auth/me', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success && data.user) {
+                const user = data.user;
+                
+                const userSettingsContent = `
+                    <div class="user-settings-modal">
+                        <div class="user-settings-header">
+                            <div class="user-avatar-large">
+                                <span class="user-initials-large">${user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}</span>
+                            </div>
+                            <div class="user-basic-info">
+                                <h3 class="user-full-name">${user.name}</h3>
+                                <p class="user-email">${user.email}</p>
+                                <div class="user-role-badge-large ${user.is_admin ? 'admin' : 'user'}">
+                                    <i class="fas fa-${user.is_admin ? 'shield-alt' : 'user'}"></i>
+                                    ${user.is_admin ? 'Administrator' : 'User'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-divider"></div>
+                        
+                        <div class="user-details-grid">
+                            <div class="detail-section">
+                                <h4 class="section-title">
+                                    <i class="fas fa-user-circle"></i>
+                                    Account Information
+                                </h4>
+                                <div class="detail-items">
+                                    <div class="detail-item">
+                                        <span class="detail-label">User ID:</span>
+                                        <span class="detail-value">${user.user_id}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Full Name:</span>
+                                        <span class="detail-value">${user.name}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Email Address:</span>
+                                        <span class="detail-value">${user.email}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Account Type:</span>
+                                        <span class="detail-value role-badge ${user.is_admin ? 'admin' : 'user'}">
+                                            <i class="fas fa-${user.is_admin ? 'shield-alt' : 'user'}"></i>
+                                            ${user.is_admin ? 'Administrator' : 'Standard User'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="detail-section">
+                                <h4 class="section-title">
+                                    <i class="fas fa-clock"></i>
+                                    Activity Information
+                                </h4>
+                                <div class="detail-items">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Member Since:</span>
+                                        <span class="detail-value">${new Date(user.created_at).toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric' 
+                                        })}</span>
+                                    </div>
+                                    ${user.last_login ? `
+                                    <div class="detail-item">
+                                        <span class="detail-label">Last Login:</span>
+                                        <span class="detail-value">${new Date(user.last_login).toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'long', 
+                                            day: 'numeric',
+                                            hour: '2-digit',
+                                            minute: '2-digit'
+                                        })}</span>
+                                    </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="detail-section">
+                                <h4 class="section-title">
+                                    <i class="fas fa-chart-bar"></i>
+                                    Usage Statistics
+                                </h4>
+                                <div class="detail-items">
+                                    <div class="detail-item">
+                                        <span class="detail-label">Total Datasets:</span>
+                                        <span class="detail-value stat-number">${this.datasets.length}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Total Queries:</span>
+                                        <span class="detail-value stat-number">${this.queryHistory.length}</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Total Records:</span>
+                                        <span class="detail-value stat-number">${this.datasets.reduce((sum, d) => sum + d.rows, 0).toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            ${user.is_admin ? `
+                            <div class="detail-section admin-section">
+                                <h4 class="section-title">
+                                    <i class="fas fa-shield-alt"></i>
+                                    Administrator Privileges
+                                </h4>
+                                <div class="detail-items">
+                                    <div class="admin-privilege">
+                                        <i class="fas fa-upload"></i>
+                                        <span>Upload shared datasets</span>
+                                    </div>
+                                    <div class="admin-privilege">
+                                        <i class="fas fa-edit"></i>
+                                        <span>Manage existing datasets</span>
+                                    </div>
+                                    <div class="admin-privilege">
+                                        <i class="fas fa-users"></i>
+                                        <span>System administration</span>
+                                    </div>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                this.showModal('User Settings', userSettingsContent);
+            } else {
+                UI.showToast('Unable to load user settings', 'error');
+            }
+        } catch (error) {
+            console.error('Error loading user settings:', error);
+            UI.showToast('Error loading user settings', 'error');
+        }
+    }
+
     showHelp() {
         const helpContent = `
             <div class="help-content">
@@ -796,6 +1112,314 @@ class AMINAApp {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
+    
+    async loadDashboardData() {
+        // Force reload dashboard data when switching to dashboard
+        try {
+            await Promise.all([
+                this.loadSharedDatasets(),
+                this.loadQueryHistory()
+            ]);
+            // Dashboard will be updated automatically by the load methods
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        }
+    }
+    
+    
+    async loadUserInfo() {
+        try {
+            const response = await fetch('/api/auth/me', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            
+            if (data.success && data.user) {
+                const user = data.user;
+                this.currentUser = user;
+                
+                // Update user info display
+                const userInfo = document.getElementById('userInfo');
+                const userName = document.getElementById('userName');
+                
+                // New dropdown elements
+                const dropdownRole = document.getElementById('dropdownRole');
+                const dropdownInitials = document.getElementById('dropdownInitials');
+                
+                if (userInfo) {
+                    userInfo.style.display = 'flex';
+                }
+                if (userName) userName.textContent = user.name;
+                
+                // Generate user initials
+                const initials = user.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                
+                // Populate dropdown with user info
+                if (dropdownRole) {
+                    dropdownRole.textContent = user.is_admin ? 'Administrator' : 'User';
+                    dropdownRole.className = `user-role-badge ${user.is_admin ? 'admin' : 'user'}`;
+                }
+                if (dropdownInitials) dropdownInitials.textContent = initials;
+                
+                // Set up dropdown functionality after user info is loaded
+                this.setupUserDropdown();
+                
+                // Configure UI based on user role
+                this.configureUIForUserRole(user);
+            }
+        } catch (error) {
+            console.error('Error loading user info:', error);
+        }
+    }
+
+    configureUIForUserRole(user) {
+        // Show/hide admin-only elements
+        const adminUploadSection = document.getElementById('adminUploadSection');
+        const datasetsTitle = document.getElementById('datasetsTitle');
+        const datasetsDescription = document.getElementById('datasetsDescription');
+        const datasetsListTitle = document.getElementById('datasetsListTitle');
+        
+        if (user.is_admin) {
+            // Admin user - show upload functionality
+            if (adminUploadSection) adminUploadSection.style.display = 'block';
+            if (datasetsTitle) datasetsTitle.textContent = 'Shared Dataset Management';
+            if (datasetsDescription) datasetsDescription.textContent = 'Upload and manage datasets available to all users';
+            if (datasetsListTitle) datasetsListTitle.textContent = 'Manage Shared Datasets';
+            
+            // Update Quick Actions for admin
+            this.updateQuickActionsForAdmin();
+        } else {
+            // Regular user - hide upload functionality
+            if (adminUploadSection) adminUploadSection.style.display = 'none';
+            if (datasetsTitle) datasetsTitle.textContent = 'Available Datasets';
+            if (datasetsDescription) datasetsDescription.textContent = 'View shared datasets available for querying';
+            if (datasetsListTitle) datasetsListTitle.textContent = 'Shared Datasets';
+        }
+        
+        // Load appropriate datasets
+        this.loadSharedDatasets();
+        
+        // Update query section
+        this.updateQuerySectionForUserRole(user);
+    }
+
+    updateQuickActionsForAdmin() {
+        const quickActions = document.querySelector('.action-buttons');
+        if (quickActions) {
+            quickActions.innerHTML = `
+                <button class="action-btn admin-action" onclick="switchSection('datasets')">
+                    <i class="fas fa-upload"></i>
+                    Manage Datasets
+                </button>
+                <button class="action-btn" onclick="switchSection('query')">
+                    <i class="fas fa-search"></i>
+                    New Query
+                </button>
+                <button class="action-btn" onclick="switchSection('history')">
+                    <i class="fas fa-history"></i>
+                    View History
+                </button>
+            `;
+        }
+    }
+
+    async loadDatasetsForUserRole(user) {
+        // Load shared datasets for both admin and regular users
+        await this.loadSharedDatasets();
+    }
+
+    async loadSharedDatasets() {
+        try {
+            console.log('loadSharedDatasets() called');
+            console.log('currentUser:', this.currentUser);
+            
+            UI.showLoading('datasetsList');
+            
+            // Use API methods instead of direct fetch
+            let response;
+            if (this.currentUser?.is_admin) {
+                console.log('Loading admin shared datasets...');
+                response = await API.getAdminSharedDatasets();
+            } else {
+                console.log('Loading regular shared datasets...');
+                response = await API.getSharedDatasets();
+            }
+            
+            console.log('API response:', response);
+            
+            if (response.success) {
+                this.datasets = response.datasets;
+                console.log('Loaded datasets:', this.datasets.length, 'datasets');
+                this.renderSharedDatasetsList();
+                this.updateQueryDatasetsList();
+                this.updateDashboard();
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            console.error('Error loading shared datasets:', error);
+            UI.showError('datasetsList', 'Failed to load datasets');
+            UI.showToast('Failed to load datasets', 'error');
+        }
+    }
+
+    renderSharedDatasetsList() {
+        const container = document.getElementById('datasetsList');
+        
+        if (this.datasets.length === 0) {
+            const emptyMessage = this.currentUser?.is_admin ? 
+                'No shared datasets uploaded yet. Upload the first dataset above.' :
+                'No shared datasets available. Contact an administrator to upload datasets.';
+            
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-database"></i>
+                    <p>${emptyMessage}</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = this.datasets.map(dataset => `
+            <div class="dataset-item" data-id="${dataset.id}">
+                <div class="dataset-info">
+                    <h4>${dataset.name}</h4>
+                    <div class="dataset-meta">
+                        <span><i class="fas fa-table"></i> ${dataset.rows.toLocaleString()} rows</span>
+                        <span><i class="fas fa-columns"></i> ${dataset.columns} columns</span>
+                        <span><i class="fas fa-calendar"></i> ${new Date(dataset.upload_date).toLocaleDateString()}</span>
+                        <span><i class="fas fa-weight"></i> ${this.formatFileSize(dataset.size_bytes)}</span>
+                        ${dataset.uploaded_by ? `<span><i class="fas fa-user"></i> ${dataset.uploaded_by}</span>` : ''}
+                    </div>
+                </div>
+                <div class="dataset-actions">
+                    ${this.currentUser?.is_admin ? `
+                        <button class="action-icon admin-action" onclick="app.renameSharedDataset('${dataset.id}')" title="Rename">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-icon admin-action danger" onclick="app.deleteSharedDataset('${dataset.id}')" title="Delete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : `
+                        <span class="dataset-status">Available for querying</span>
+                    `}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    updateQuerySectionForUserRole(user) {
+        // Update the query section to show available datasets info
+        this.updateAvailableDatasetsSummary();
+    }
+
+    async updateAvailableDatasetsSummary() {
+        const summaryContainer = document.getElementById('datasetSummary');
+        if (!summaryContainer) return;
+
+        if (this.datasets.length === 0) {
+            summaryContainer.innerHTML = `
+                <div class="empty-state">
+                    <p>No datasets available for querying. ${this.currentUser?.is_admin ? 'Upload datasets in the Datasets section.' : 'Contact an administrator to upload datasets.'}</p>
+                </div>
+            `;
+        } else {
+            const totalRows = this.datasets.reduce((sum, ds) => sum + ds.rows, 0);
+            summaryContainer.innerHTML = `
+                <div class="dataset-summary-grid">
+                    <div class="summary-card">
+                        <div class="summary-number">${this.datasets.length}</div>
+                        <div class="summary-label">Datasets Available</div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="summary-number">${totalRows.toLocaleString()}</div>
+                        <div class="summary-label">Total Records</div>
+                    </div>
+                </div>
+                <div class="dataset-list-compact">
+                    ${this.datasets.map(ds => `
+                        <div class="dataset-compact-item">
+                            <span class="dataset-name">${ds.name}</span>
+                            <span class="dataset-rows">${ds.rows.toLocaleString()} rows</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+    }
+
+    async renameSharedDataset(datasetId) {
+        if (!this.currentUser?.is_admin) return;
+        
+        const dataset = this.datasets.find(d => d.id === datasetId);
+        if (!dataset) return;
+        
+        const newName = prompt('Enter new name for dataset:', dataset.name);
+        if (!newName || newName.trim() === '' || newName === dataset.name) return;
+        
+        try {
+            const response = await API.renameSharedDataset(datasetId, newName.trim());
+            if (response.success) {
+                UI.showToast('Dataset renamed successfully', 'success');
+                await this.loadSharedDatasets();
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            console.error('Error renaming dataset:', error);
+            UI.showToast('Failed to rename dataset', 'error');
+        }
+    }
+
+    async deleteSharedDataset(datasetId) {
+        if (!this.currentUser?.is_admin) return;
+        
+        const dataset = this.datasets.find(d => d.id === datasetId);
+        if (!dataset) return;
+        
+        if (!confirm(`Are you sure you want to delete "${dataset.name}"? This action cannot be undone.`)) return;
+        
+        try {
+            const response = await API.deleteSharedDataset(datasetId);
+            if (response.success) {
+                UI.showToast('Dataset deleted successfully', 'success');
+                await this.loadSharedDatasets();
+            } else {
+                throw new Error(response.error);
+            }
+        } catch (error) {
+            console.error('Error deleting dataset:', error);
+            UI.showToast('Failed to delete dataset', 'error');
+        }
+    }
+    
+    async handleLogout() {
+        try {
+            const response = await fetch('/api/auth/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                UI.showToast('Logged out successfully', 'success');
+                // Redirect to login page
+                setTimeout(() => {
+                    window.location.href = '/login';
+                }, 1000);
+            } else {
+                UI.showToast('Logout failed', 'error');
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Force redirect even if logout request fails
+            UI.showToast('Logged out', 'success');
+            setTimeout(() => {
+                window.location.href = '/login';
+            }, 1000);
+        }
+    }
 }
 
 // Global functions
@@ -803,6 +1427,7 @@ window.switchSection = (section) => app.switchSection(section);
 window.setExampleQuery = (query) => app.setExampleQuery(query);
 window.clearResults = () => app.clearResults();
 window.closeModal = () => app.closeModal();
+window.toggleUserDropdown = () => app.toggleUserDropdown();
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
