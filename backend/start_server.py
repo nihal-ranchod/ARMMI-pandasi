@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import os
-import subprocess
 import sys
 
 def main():
@@ -11,7 +10,7 @@ def main():
     print(f"Command: {' '.join(cmd)}")
 
     try:
-        subprocess.exec(cmd)
+        os.execvp('gunicorn', cmd)
     except Exception as e:
         print(f"Error starting server: {e}")
         sys.exit(1)
