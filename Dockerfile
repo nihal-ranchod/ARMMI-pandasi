@@ -26,11 +26,8 @@ COPY . .
 # Change to backend directory
 WORKDIR /app/backend
 
-# Make start script executable (from parent directory)
-RUN chmod +x ../start.sh
-
 # Expose port
-EXPOSE $PORT
+EXPOSE 5000
 
-# Start command
-CMD ["../start.sh"]
+# Start command with default port
+CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000"]
