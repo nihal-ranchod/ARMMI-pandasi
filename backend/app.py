@@ -265,6 +265,43 @@ def export_results(result_id):
         logger.error(f"Error exporting results: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# Chart serving route
+@app.route('/api/charts/<chart_id>', methods=['GET'])
+@login_required
+def serve_chart(chart_id):
+    try:
+        current_user = get_current_user()
+
+        # Find the chart data in user's query history
+        chart_data = None
+        for query in current_user.query_history:
+            if 'full_result' in query and 'visualizations' in query['full_result']:
+                for viz in query['full_result']['visualizations']:
+                    if viz.get('id') == chart_id:
+                        chart_data = viz.get('data')
+                        break
+                if chart_data:
+                    break
+
+        if chart_data:
+            import base64
+            from flask import Response
+
+            # Decode base64 image data
+            image_data = base64.b64decode(chart_data)
+
+            return Response(
+                image_data,
+                mimetype='image/png',
+                headers={'Content-Type': 'image/png'}
+            )
+        else:
+            return jsonify({'success': False, 'error': 'Chart not found'}), 404
+
+    except Exception as e:
+        logger.error(f"Error serving chart: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # Admin-only routes for shared dataset management
 @app.route('/api/admin/shared-datasets', methods=['GET'])
 @admin_required
@@ -368,37 +405,6 @@ def get_user_profile():
         logger.error(f"Error getting user profile: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/api/charts/<chart_id>')
-@login_required
-def serve_chart(chart_id):
-    try:
-        current_user = get_current_user()
-        
-        # Find the chart in user's query history
-        chart_data = None
-        for query in current_user.query_history:
-            if 'full_result' in query and query['full_result']:
-                result = query['full_result']
-                if 'visualizations' in result:
-                    for viz in result['visualizations']:
-                        if viz.get('id') == chart_id:
-                            chart_data = viz.get('data')
-                            break
-                if chart_data:
-                    break
-        
-        if not chart_data:
-            return jsonify({'success': False, 'error': 'Chart not found'}), 404
-            
-        # Decode base64 and return as image
-        from flask import Response
-        
-        image_data = base64.b64decode(chart_data)
-        return Response(image_data, mimetype='image/png')
-        
-    except Exception as e:
-        logger.error(f"Error serving chart: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Test MongoDB connection at startup (only in main process, not reloader)

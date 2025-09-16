@@ -499,11 +499,15 @@ class AMINAApp {
             </div>
         `;
         
-        // Show ONLY the LLM response text (formatted nicely)
-        if (result.response && result.response.trim() !== '') {
+        // Show ONLY the LLM response text (formatted nicely) - but only if we don't have structured data tables
+        const hasDataTables = result.data_tables && result.data_tables.length > 0;
+        const hasVisualizations = result.visualizations && result.visualizations.length > 0;
+
+        if (result.response && result.response.trim() !== '' && !hasDataTables) {
             console.log('Adding response content'); // Debug log
             html += `
                 <div class="result-item">
+                    <h4><i class="fas fa-brain"></i> Analysis</h4>
                     <div class="response-content">
                         ${this.formatResponseText(result.response)}
                     </div>
@@ -519,8 +523,8 @@ class AMINAApp {
                     <div class="result-item">
                         <h4><i class="fas fa-chart-bar"></i> ${viz.title}</h4>
                         <div class="visualization">
-                            <img src="${viz.url}" alt="${viz.title}" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" 
-                                 onload="console.log('Chart loaded successfully')" 
+                            <img src="${viz.url}" alt="${viz.title}"
+                                 onload="console.log('Chart loaded successfully')"
                                  onerror="console.error('Failed to load chart:', this.src); this.style.display='none'; this.nextElementSibling.style.display='block';">
                             <div style="display: none; text-align: center; color: #666; padding: 20px;">
                                 <i class="fas fa-exclamation-triangle"></i>
@@ -554,29 +558,39 @@ class AMINAApp {
         if (!table.data || !table.columns || table.data.length === 0) {
             return '<p class="no-data">No data to display</p>';
         }
-        
+
         let html = '<div class="table-wrapper"><table class="data-table">';
-        
+
         // Table header
         html += '<thead><tr>';
         table.columns.forEach(col => {
-            html += `<th>${col}</th>`;
+            html += `<th>${col.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</th>`;
         });
         html += '</tr></thead>';
-        
+
         // Table body
         html += '<tbody>';
         table.data.forEach(row => {
             html += '<tr>';
             table.columns.forEach(col => {
                 const value = row[col];
-                const displayValue = value === null || value === undefined ? '' : value;
+                let displayValue = '';
+
+                if (value === null || value === undefined) {
+                    displayValue = '';
+                } else if (typeof value === 'number') {
+                    // Format numbers with thousand separators
+                    displayValue = value.toLocaleString();
+                } else {
+                    displayValue = String(value);
+                }
+
                 html += `<td>${displayValue}</td>`;
             });
             html += '</tr>';
         });
         html += '</tbody></table></div>';
-        
+
         return html;
     }
     
@@ -672,10 +686,13 @@ class AMINAApp {
     
     async loadQueryHistory() {
         try {
+            console.log('Loading query history...');
             const response = await API.getQueryHistory();
-            
+            console.log('Query history response:', response);
+
             if (response.success) {
                 this.queryHistory = response.history;
+                console.log('Query history loaded:', this.queryHistory);
                 this.renderQueryHistory();
                 // Update dashboard when query history changes
                 this.updateDashboard();
@@ -690,8 +707,16 @@ class AMINAApp {
     
     renderQueryHistory() {
         const container = document.getElementById('historyList');
-        
+        console.log('Rendering query history, container:', container);
+        console.log('Query history array:', this.queryHistory);
+
+        if (!container) {
+            console.error('History container not found');
+            return;
+        }
+
         if (this.queryHistory.length === 0) {
+            console.log('No query history found, showing empty state');
             container.innerHTML = `
                 <div class="empty-state">
                     <i class="fas fa-history"></i>
@@ -842,7 +867,11 @@ class AMINAApp {
         // Set up user settings button
         const userSettingsBtn = document.getElementById('userSettingsBtn');
         if (userSettingsBtn) {
-            userSettingsBtn.addEventListener('click', () => {
+            // Clone node to remove existing listeners
+            const newUserSettingsBtn = userSettingsBtn.cloneNode(true);
+            userSettingsBtn.parentNode.replaceChild(newUserSettingsBtn, userSettingsBtn);
+
+            newUserSettingsBtn.addEventListener('click', () => {
                 this.closeUserDropdown();
                 this.showUserSettings();
             });
@@ -851,7 +880,11 @@ class AMINAApp {
         // Set up logout button
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
-            logoutBtn.addEventListener('click', () => {
+            // Clone node to remove existing listeners
+            const newLogoutBtn = logoutBtn.cloneNode(true);
+            logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+
+            newLogoutBtn.addEventListener('click', () => {
                 this.closeUserDropdown();
                 this.handleLogout();
             });
@@ -1414,7 +1447,6 @@ class AMINAApp {
         } catch (error) {
             console.error('Logout error:', error);
             // Force redirect even if logout request fails
-            UI.showToast('Logged out', 'success');
             setTimeout(() => {
                 window.location.href = '/login';
             }, 1000);
