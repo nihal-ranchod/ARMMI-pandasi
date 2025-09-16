@@ -23,11 +23,11 @@ RUN pip install -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Change to backend directory
-WORKDIR /app/backend
+# Make start script executable
+RUN chmod +x start.sh
 
 # Expose port
 EXPOSE $PORT
 
 # Start command
-CMD ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:$PORT"]
+CMD ["./start.sh"]
