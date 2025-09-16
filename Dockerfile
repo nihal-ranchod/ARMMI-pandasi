@@ -29,5 +29,5 @@ WORKDIR /app/backend
 # Expose port
 EXPOSE $PORT
 
-# Start command that handles PORT variable
-ENTRYPOINT ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT:-5000}"]
+# Start command using Python script
+CMD ["python", "start_server.py"]
