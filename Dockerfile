@@ -23,11 +23,14 @@ RUN pip install -r requirements.txt
 # Copy the rest of the application
 COPY . .
 
-# Make start script executable
-RUN chmod +x start.sh
+# Change to backend directory
+WORKDIR /app/backend
+
+# Make start script executable (from parent directory)
+RUN chmod +x ../start.sh
 
 # Expose port
 EXPOSE $PORT
 
 # Start command
-CMD ["./start.sh"]
+CMD ["../start.sh"]
