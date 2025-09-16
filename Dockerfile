@@ -27,7 +27,7 @@ COPY . .
 WORKDIR /app/backend
 
 # Expose port
-EXPOSE 5000
+EXPOSE $PORT
 
-# Start command with default port
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:5000"]
+# Start command that handles PORT variable
+ENTRYPOINT ["sh", "-c", "gunicorn app:app --bind 0.0.0.0:${PORT:-5000}"]
