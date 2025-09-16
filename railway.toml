@@ -1,11 +1,5 @@
 [build]
-builder = "nixpacks"
-
-[build.nixpacks]
-packages = ["python311", "python311-dev", "gcc", "g++", "make", "pkg-config", "gfortran", "libblas-dev", "liblapack-dev"]
-
-[build.nixpacks.env]
-PYTHON_VERSION = "3.11"
+builder = "dockerfile"
 
 [deploy]
-startCommand = "cd backend && python -m gunicorn app:app --bind 0.0.0.0:$PORT"
+startCommand = "cd backend && gunicorn app:app --bind 0.0.0.0:$PORT"
