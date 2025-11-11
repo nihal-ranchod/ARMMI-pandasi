@@ -1,0 +1,92 @@
+services:
+  # AMMINA Platform Web Service
+  - type: web
+    name: ammina-platform
+    runtime: docker
+    repo: https://github.com/nihal-ranchod/ARMMI-pandasi
+    branch: main
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+
+    # Health check configuration
+    healthCheckPath: /
+
+    # Environment variables (set these in Render Dashboard with actual values)
+    envVars:
+      # Flask Configuration
+      - key: FLASK_ENV
+        value: production
+
+      - key: FLASK_DEBUG
+        value: False
+
+      # Database (MongoDB Atlas - REQUIRED)
+      # Get this from MongoDB Atlas connection string
+      - key: MONGODB_URI
+        sync: false  # Set this manually in Render Dashboard
+
+      - key: MONGODB_DB_NAME
+        value: ammina_platform
+
+      # OpenAI API (REQUIRED)
+      # Get this from platform.openai.com
+      - key: OPENAI_API_KEY
+        sync: false  # Set this manually in Render Dashboard
+
+      # Security (REQUIRED)
+      # Generate a secure random string (e.g., python -c "import secrets; print(secrets.token_hex(32))")
+      - key: SECRET_KEY
+        sync: false  # Set this manually in Render Dashboard
+
+      # Admin registration key (REQUIRED for creating admin accounts)
+      # Create your own secure key
+      - key: ADMIN_REGISTRATION_KEY
+        sync: false  # Set this manually in Render Dashboard
+
+      # Session Configuration (Production Settings)
+      - key: SESSION_COOKIE_SECURE
+        value: True
+
+      - key: SESSION_COOKIE_HTTPONLY
+        value: True
+
+      - key: SESSION_COOKIE_SAMESITE
+        value: Lax
+
+      # File Upload Limits
+      - key: MAX_CONTENT_LENGTH
+        value: 104857600  # 100MB in bytes
+
+      # Application Limits
+      - key: MAX_ROWS
+        value: 1000000
+
+      - key: MAX_COLUMNS
+        value: 1000
+
+      - key: QUERY_TIMEOUT
+        value: 300
+
+      - key: MAX_QUERIES_PER_MINUTE
+        value: 10
+
+      # CORS Configuration (Optional - update with your domain)
+      - key: CORS_ORIGINS
+        value: "*"  # Change to your specific domain in production
+
+    # Auto-deploy on git push
+    autoDeploy: true
+
+    # Instance configuration
+    # Free tier: Available
+    # Starter: $7/month (recommended for production)
+    plan: free  # Change to 'starter' for paid tier with better performance
+
+    # Region (choose closest to your users)
+    region: oregon  # Options: oregon, frankfurt, singapore, ohio
+
+    # Build configuration
+    buildCommand: echo "Using Dockerfile for build"
+
+    # The PORT environment variable is automatically set by Render
+    # Your start_server.py reads from os.getenv('PORT', 5000)

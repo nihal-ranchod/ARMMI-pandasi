@@ -210,6 +210,218 @@ AMMINA/
 - **Pandas**: Data processing
 - **Plotly**: Data visualization
 
+## 🚀 Deployment
+
+### Deploy to Render.com
+
+This application is configured for easy deployment on [Render.com](https://render.com) with Docker support.
+
+#### Prerequisites
+1. **GitHub Account** - Your code repository
+2. **Render Account** - Free at [render.com](https://render.com)
+3. **MongoDB Atlas Account** - Free tier at [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
+4. **OpenAI API Key** - From [platform.openai.com](https://platform.openai.com/api-keys)
+
+#### Step 1: Setup MongoDB Atlas (5 minutes)
+
+1. **Create MongoDB Atlas Account**
+   - Go to [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas)
+   - Sign up for free (no credit card required)
+
+2. **Create a Free Cluster**
+   - Click "Build a Database"
+   - Select "M0 Free" tier (512MB storage)
+   - Choose your preferred cloud region (closest to your users)
+   - Click "Create Cluster"
+
+3. **Create Database User**
+   - Go to "Database Access" in the left sidebar
+   - Click "Add New Database User"
+   - Choose "Password" authentication
+   - Create a username and secure password (save these!)
+   - Set user privileges to "Read and write to any database"
+   - Click "Add User"
+
+4. **Configure Network Access**
+   - Go to "Network Access" in the left sidebar
+   - Click "Add IP Address"
+   - Click "Allow Access From Anywhere" (0.0.0.0/0)
+   - Click "Confirm"
+   - Note: This is required for Render to connect to your database
+
+5. **Get Connection String**
+   - Go to "Database" and click "Connect" on your cluster
+   - Choose "Connect your application"
+   - Copy the connection string (looks like `mongodb+srv://...`)
+   - Replace `<password>` with your actual database password
+   - Save this connection string for Render configuration
+
+#### Step 2: Prepare Your Repository (2 minutes)
+
+1. **Update render.yaml** (if needed)
+   - Open [render.yaml](render.yaml)
+   - Update the `repo` URL with your GitHub username/organization
+   - Review environment variable defaults
+
+2. **Generate Required Keys**
+   ```bash
+   # Generate Flask SECRET_KEY
+   python -c "import secrets; print('SECRET_KEY:', secrets.token_hex(32))"
+
+   # Create your own ADMIN_REGISTRATION_KEY (any secure string)
+   python -c "import secrets; print('ADMIN_REGISTRATION_KEY:', secrets.token_urlsafe(32))"
+   ```
+   Save these keys - you'll need them for Render configuration.
+
+3. **Push to GitHub** (if not already done)
+   ```bash
+   git add .
+   git commit -m "Prepare for Render deployment"
+   git push origin main
+   ```
+
+#### Step 3: Deploy on Render (10 minutes)
+
+##### Option A: Using Blueprint (Recommended - Automated)
+
+1. **Create Blueprint from Repository**
+   - Log in to [Render Dashboard](https://dashboard.render.com)
+   - Click "New +" → "Blueprint"
+   - Connect your GitHub account if not already connected
+   - Select your repository (`ARMMI-pandasi`)
+   - Render will automatically detect [render.yaml](render.yaml)
+   - Click "Apply"
+
+2. **Configure Environment Variables**
+   - Render will create a new web service
+   - Go to your service → "Environment" tab
+   - Set the following **required** variables:
+     ```
+     MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/
+     OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxx
+     SECRET_KEY=<generated_secret_key_from_step_2>
+     ADMIN_REGISTRATION_KEY=<your_secure_admin_key>
+     ```
+   - Review optional variables (CORS_ORIGINS, MAX_CONTENT_LENGTH, etc.)
+   - Click "Save Changes"
+
+3. **Trigger Deployment**
+   - Render will automatically start building and deploying
+   - Monitor the "Logs" tab for build progress
+   - Wait for "Deploy successful" message (5-10 minutes first time)
+
+##### Option B: Manual Setup (Alternative)
+
+1. **Create New Web Service**
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click "New +" → "Web Service"
+   - Connect your GitHub repository
+
+2. **Configure Service Settings**
+   - **Name**: `ammina-platform` (or your choice)
+   - **Region**: Choose closest to your users
+   - **Branch**: `main`
+   - **Runtime**: Select "Docker"
+   - **Dockerfile Path**: `./Dockerfile`
+   - **Docker Build Context Directory**: `.` (root)
+   - **Instance Type**: Free (or Starter $7/month for better performance)
+
+3. **Set Environment Variables** (same as Option A above)
+
+4. **Create Web Service** - Click "Create Web Service"
+
+#### Step 4: Post-Deployment (5 minutes)
+
+1. **Get Your Application URL**
+   - Render provides a URL like: `https://ammina-platform.onrender.com`
+   - This is your live application URL!
+
+2. **Test the Deployment**
+   - Visit your Render URL
+   - Try to register a new user account
+   - Upload a test dataset (CSV/Excel)
+   - Run a natural language query
+
+3. **Create Admin Account** (if needed)
+   - Use the `ADMIN_REGISTRATION_KEY` you set in environment variables
+   - During registration, enter this key to create admin accounts
+
+4. **Configure Custom Domain** (Optional)
+   - Go to your service → "Settings" tab
+   - Click "Add Custom Domain"
+   - Follow DNS configuration instructions
+   - Free SSL certificates are automatically provisioned
+
+#### Step 5: Ongoing Management
+
+**Monitor Your Application**
+- View logs in real-time on Render dashboard
+- Set up health check alerts
+- Monitor MongoDB usage in Atlas dashboard
+
+**Auto-Deploy on Git Push**
+- Render automatically deploys when you push to `main` branch
+- Disable in service settings if you prefer manual deployments
+
+**Scale Your Application**
+- **Free Tier**: Spins down after 15 minutes of inactivity (cold starts ~30s)
+- **Starter ($7/month)**: Always running, 512MB RAM, better performance
+- **Standard ($25/month)**: 2GB RAM, horizontal scaling available
+
+**Update Environment Variables**
+- Go to service → "Environment" tab
+- Add/modify variables as needed
+- Click "Save Changes" to trigger redeployment
+
+#### Troubleshooting Render Deployment
+
+**Build Fails**
+- Check [Dockerfile](Dockerfile) syntax
+- Review build logs for missing dependencies
+- Ensure all `requirements.txt` packages are available
+
+**Application Won't Start**
+- Verify `MONGODB_URI` is correct and MongoDB Atlas is accessible
+- Check `OPENAI_API_KEY` is valid
+- Ensure `SECRET_KEY` is set
+- Review application logs for specific errors
+
+**Database Connection Errors**
+- Verify MongoDB Atlas IP whitelist includes 0.0.0.0/0
+- Check database user credentials in `MONGODB_URI`
+- Ensure cluster is running (not paused)
+
+**Slow Performance on Free Tier**
+- Free tier spins down after inactivity (causes cold starts)
+- Upgrade to Starter plan ($7/month) for always-on service
+- Consider caching strategies for better performance
+
+**OpenAI API Errors**
+- Verify API key is active and has credits
+- Check OpenAI usage limits and quotas
+- Review query logs for specific error messages
+
+#### Cost Estimate
+
+| Service | Tier | Monthly Cost |
+|---------|------|--------------|
+| **Render Web Service** | Free | $0 |
+| **Render Web Service** | Starter | $7 |
+| **MongoDB Atlas** | M0 Free | $0 |
+| **OpenAI API** | Usage-based | Variable ($0.15/$0.60 per 1M tokens) |
+| **Total (Free tier)** | - | **~$0-5** (OpenAI only) |
+| **Total (Production)** | - | **~$7-15** |
+
+#### Alternative Deployment Options
+
+If Render doesn't meet your needs, this application also supports:
+- **Fly.io** - Docker-based, generous free tier
+- **Railway** - Already configured with [railway.toml](railway.toml)
+- **DigitalOcean App Platform** - $5/month minimum
+- **AWS/GCP/Azure** - VM-based deployment with Docker
+
+See [.env.example](.env.example) for full environment variable documentation.
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
